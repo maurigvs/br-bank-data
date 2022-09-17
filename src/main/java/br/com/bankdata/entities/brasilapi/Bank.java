@@ -2,7 +2,7 @@ package br.com.bankdata.entities.brasilapi;
 
 import java.io.Serializable;
 
-public class BankInfo implements Serializable {
+public class Bank implements Serializable {
 
     private String ispb;
     private String name;
@@ -26,6 +26,13 @@ public class BankInfo implements Serializable {
     }
 
     public String getCode() {
+        if(code != null && code.length() < 3){
+            StringBuilder fullCode = new StringBuilder(code);
+            while(fullCode.length() < 3){
+                fullCode.reverse().append("0").reverse();
+            }
+            code = fullCode.toString();
+        }
         return code;
     }
 
@@ -39,5 +46,15 @@ public class BankInfo implements Serializable {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    @Override
+    public String toString() {
+        return "Bank {" +
+                "ispb = '" + ispb + '\'' +
+                ", name = '" + name + '\'' +
+                ", code = '" + code + '\'' +
+                ", fullName = '" + fullName + '\'' +
+                '}';
     }
 }
