@@ -11,29 +11,17 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
+    public static void main(String[] args) {
 
-        InputStream input = Main.class.getClassLoader().getResourceAsStream("application.properties");
-        Properties properties = new Properties();
-        properties.load(input);
-        String URI = properties.getProperty("brasilapi.uri");
+        List<Bank> banks = getBankList();
 
-        HttpClient client = HttpClient.newHttpClient();
-        Gson gson = new Gson();
         String[] menu = {"S", "A", "X"};
-
-        HttpRequest request = HttpRequest.newBuilder().uri(new URI(URI)).build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        List<Bank> banks = gson.fromJson(response.body(), new TypeToken<List<Bank>>(){}.getType());
-
         Scanner sc = new Scanner(System.in);
+
         while(true){
             System.out.print("Press option: [S] Search - [A] List All - [X] Exit - ");
             String option = sc.next();
@@ -66,5 +54,53 @@ public class Main {
 
             System.out.println();
         }
+    }
+
+    private static List<Bank> getBankList() {
+
+        String propertiesFile = "application.properties";
+        String apiProperty = "brasilapi.uri";
+
+        List<Bank> bankList = new ArrayList<>();
+        Gson gson = new Gson();
+        HttpResponse<String> response = callAPI(getURI(propertiesFile, apiProperty));
+        bankList.addAll(gson.fromJson(response.body(), new TypeToken<List<Bank>>(){}.getType()));
+        return bankList;
+    }
+
+    private static HttpResponse<String> callAPI(URI uri) {
+
+        System.out.println(uri.getPath());
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder().uri(uri).build();
+        HttpResponse<String> response = null;
+
+        try {
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException | InterruptedException e) {
+            System.out.println("Error calling " + uri.getPath() + ": " + e.getMessage());
+        }
+
+        return response;
+    }
+
+    private static URI getURI(String propertiesFile, String apiProperty) {
+
+        URI URI = null;
+        try {
+            InputStream input = Main.class.getClassLoader().getResourceAsStream(propertiesFile);
+            Properties properties = new Properties();
+
+            properties.load(input);
+            String uri = properties.getProperty(apiProperty);
+            URI = new URI(uri);
+
+        } catch (IOException e) {
+            System.out.println("Error getting properties file " + propertiesFile + ": " + e.getMessage());
+        } catch (URISyntaxException e) {
+            System.out.println("Error getting URI from " + apiProperty + ": " + e.getMessage());
+        }
+        return URI;
     }
 }
